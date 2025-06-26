@@ -8,3 +8,10 @@ Decided to create services and interfaces for parsing the log file as well as ha
 The application will parse the data lazely and store it into an IEnumerable<LogEntry>
 The JobMonitorService will receive the parsed data and store it inside JobInfo objects after grouping by PID and isStart
 The JobInfo object contains  start time and end time and will calculate the duration
+Output will be a full Job Report list as well as jobs that got flagged with _logger.LogWarning or _logger.LogError.
+I also logged info for jobs that completed without passing the desired times
+
+
+# Disclaimer:
+Pe commits va aparea numele adria, a trebuit sa fac o mica impersonare in trecut si a ramas asa.
+Sorry de confusion dar mi-am dat seama prea tarziu
