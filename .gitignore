@@ -1,15 +1,56 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+﻿#----------------------------------------
+# Visual Studio
+#----------------------------------------
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-/.vs
-/LogMonitor/.vs/LogMonitor
-/LogMonitor/LogMonitor/obj
-/LogMonitor/LogMonitorData/obj
-/LogMonitor/LogMonitorService/obj
-/LogMonitor/LogMonitor/bin/Debug/net8.0
-/LogMonitor/LogMonitorData/bin/Debug/net8.0
-/LogMonitor/LogMonitorService/bin/Debug/net8.0/runtimes/win/lib/net8.0
-/LogMonitor/LogMonitorService/bin/Debug/net8.0
-/LogMonitor/LogMonitorTests/bin
-/LogMonitor/LogMonitorTests/obj
+#----------------------------------------
+# Rider
+#----------------------------------------
+.idea/
+
+#----------------------------------------
+# VS Code
+#----------------------------------------
+.vscode/
+
+#----------------------------------------
+# Build output
+#----------------------------------------
+**/bin/
+**/obj/
+
+#----------------------------------------
+# NuGet packages
+#----------------------------------------
+*.nupkg
+packages/
+project.lock.json
+
+#----------------------------------------
+# Logs and runtime artifacts
+#----------------------------------------
+Logs/
+*.log
+
+#----------------------------------------
+# OS generated files
+#----------------------------------------
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+#----------------------------------------
+# Test result files
+#----------------------------------------
+TestResults/
+*.trx
+
+#----------------------------------------
+# User-specific files
+#----------------------------------------
+*.userprefs
+*.csproj.user

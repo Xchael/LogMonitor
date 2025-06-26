@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using LogMonitor.MonitorUtils;
 using LogMonitorData.Services.Interfaces;
 using System.Threading;
+using LogMonitor;
 
 
 
@@ -37,6 +38,8 @@ var host = Host.CreateDefaultBuilder()
         // Register the core services from LogMonitorData
         services.AddSingleton<ILogParserService, LogParserService>();
         services.AddSingleton<IJobMonitorService, JobMonitorService>();
+        //no point in interface for now
+        services.AddSingleton<LogMonitorRunner>();
     })
     .Build();
 
@@ -44,41 +47,10 @@ var host = Host.CreateDefaultBuilder()
 using var scope = host.Services.CreateScope();
 var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-var settings = config.GetSection("LogMonitor").Get<LogMonitorSettings>()
-                         ?? throw new InvalidOperationException("Missing settings");
 var parser = scope.ServiceProvider.GetRequiredService<ILogParserService>();
 var monitor = scope.ServiceProvider.GetRequiredService<IJobMonitorService>();
 
+//for testing purposes
+var runner = scope.ServiceProvider.GetRequiredService<LogMonitorRunner>();
 
-try
-{
-    //Determine log-file path and ensure folder exists
-    var folder = Path.IsPathRooted(settings.LogsFolder)
-        ? settings.LogsFolder
-        : Path.Combine(AppContext.BaseDirectory, settings.LogsFolder);
-    Directory.CreateDirectory(folder);
-
-    var logPath = Path.Combine(folder, settings.LogFileName);
-    logger.LogInformation($"Reading log from {logPath}");
-
-    //Parse and analyze
-    var entries = parser.ParseLogEntries(logPath).ToList();
-    logger.LogInformation($"Parsed {entries.Count} entries");
-
-    var jobs = monitor.AnalyzeJobs(entries).ToList();
-    logger.LogInformation($"Analyzed {jobs.Count} jobs");
-
-    //Print report
-    Console.WriteLine("Job Report");
-    foreach (var job in jobs)
-    {
-        Console.WriteLine($"PID: {job.PID} with Description: {job.Description} - ran for: {job.Duration:mm\\:ss} (from {job.StartTime:c} to {job.EndTime:c})");
-    }
-    return 0;
-}
-catch (Exception ex)
-{
-    logger.LogCritical(ex, "Fatal error");
-    return 1;
-}
-
+return runner.Run(Console.Out);
