@@ -18,5 +18,5 @@ It will do mostly the same thing as the console application for now, but it can 
 (in the current implementation a orphaned processes will not be reconciliated but that is doable as well)
 
 # Disclaimer:
-Pe commits va aparea numele adria, a trebuit sa fac o mica impersonare in trecut si a ramas asa.
-Sorry de confusion dar mi-am dat seama prea tarziu
+Some commits will have the name "adria". This was not intended but i did a bit of "impersonation" on another repo i worked on and i forgot to switch back the VS setting.
+Check attached screenshot. Sorry for possible confusion!
