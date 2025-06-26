@@ -3,3 +3,7 @@
 ################################################################################
 
 /.vs
+/LogMonitor/.vs/LogMonitor
+/LogMonitor/LogMonitor/obj
+/LogMonitor/LogMonitorData/obj
+/LogMonitor/LogMonitorService/obj
