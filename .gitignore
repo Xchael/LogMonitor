@@ -7,3 +7,7 @@
 /LogMonitor/LogMonitor/obj
 /LogMonitor/LogMonitorData/obj
 /LogMonitor/LogMonitorService/obj
+/LogMonitor/LogMonitor/bin/Debug/net8.0
+/LogMonitor/LogMonitorData/bin/Debug/net8.0
+/LogMonitor/LogMonitorService/bin/Debug/net8.0/runtimes/win/lib/net8.0
+/LogMonitor/LogMonitorService/bin/Debug/net8.0
