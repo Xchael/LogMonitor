@@ -37,44 +37,64 @@ namespace LogMonitorData.Services
             if (entries == null)
                 throw new ArgumentNullException(nameof(entries));
 
+            // Cache to avoid multiple enumeration + get a stable Count
+            var entryList = entries as IList<LogEntry> ?? entries.ToList();
+            int totalEntries = entryList.Count;
+
             //Log the start of analysis, including how many entries we'll process
-            _logger.LogInformation($"Starting job analysis on {entries.Count()} entries.");
+            _logger.LogInformation("Starting job analysis on {TotalEntries} entries.", totalEntries);
 
-            var activeJobs = new Dictionary<int, LogEntry>();
-
-            // Collects all completed jobs to return
-            var completedJobs = new List<JobInfo>();
+            // Pre-allocate about half as many jobs as entries:
+            int estimatedJobs = totalEntries / 2;
+            var completedJobs = new List<JobInfo>(estimatedJobs);
+            var activeJobs = new Dictionary<int, LogEntry>(estimatedJobs);
 
             // Process entries in chronological order
             //Will make use of PID a lot here
-            //Assumption: PID is SOT
-            foreach (var entry in entries.OrderBy(e => e.TimeStamp))
+            //Assumption: PID is SOT+
+            // Sort once
+            var sorted = entryList.OrderBy(e => e.TimeStamp);
+
+            foreach (var entry in sorted)
             {
                 if (entry.IsStart)
                 {
                     // START of a new job
-                    if (activeJobs.ContainsKey(entry.Pid))
+                    if (activeJobs.TryGetValue(entry.Pid, out var prevStart))
                     {
-                        _logger.LogWarning($"Duplicate START for PID {entry.Pid}, job '{entry.JobDescription}' at {entry.TimeStamp}. Previous START at {activeJobs[entry.Pid].TimeStamp} will be ignored.");
+                        _logger.LogWarning(
+                            "Duplicate START for PID {Pid} ('{Desc}') at {Time}; previous at {PrevTime} ignored.",
+                            entry.Pid,
+                            entry.JobDescription,
+                            entry.TimeStamp,
+                            prevStart.TimeStamp);
                     }
-
-                    //Maybe edge case? register again?
                     activeJobs[entry.Pid] = entry;
+                    continue;
+                    //Maybe edge case? register or overwrite?
                 }
                 else
                 {
                     // END of a job
                     if (!activeJobs.TryGetValue(entry.Pid, out var startEntry))
                     {
-                        // No matching START found
-                        _logger.LogWarning($"Unmatched END for PID {entry.Pid}, job '{entry.JobDescription}' at {entry.TimeStamp}.");
+                        _logger.LogWarning(
+                            "Unmatched END for PID {Pid} ('{Desc}') at {Time}.",
+                            entry.Pid,
+                            entry.JobDescription,
+                            entry.TimeStamp);
                         continue;
                     }
 
                     // Maybe edge case? If the END timestamp is before the START, skip it?
                     if (entry.TimeStamp < startEntry.TimeStamp)
                     {
-                        _logger.LogWarning($"END before START for PID {entry.Pid}, job '{entry.JobDescription}': start={startEntry.TimeStamp}, end={entry.TimeStamp}. Skipping.");
+                        _logger.LogWarning(
+                            "END before START for PID {Pid} ('{Desc}'): start={StartTime}, end={EndTime}. Skipping.",
+                            entry.Pid,
+                            entry.JobDescription,
+                            startEntry.TimeStamp,
+                            entry.TimeStamp);
                         activeJobs.Remove(entry.Pid);
                         continue;
                     }
@@ -89,20 +109,34 @@ namespace LogMonitorData.Services
                     };
 
                     // Calculate duration in minutes
-                    var duration = job.Duration.TotalMinutes;
+                    var minutes = job.Duration.TotalMinutes;
 
                     // Emit appropriate log level based on thresholds
-                    if (duration > ErrorThresholdMinutes)
+                    if (minutes > ErrorThresholdMinutes)
                     {
-                        _logger.LogError($"Job '{job.Description}' (PID {job.PID}) took {duration:F2} min (> {ErrorThresholdMinutes} min).");
+                        _logger.LogError(
+                            "Job '{Desc}' (PID {Pid}) took {Minutes:F2} min (>{ErrorThresh} min).",
+                            job.Description,
+                            job.PID,
+                            minutes,
+                            ErrorThresholdMinutes);
                     }
-                    else if (duration > WarningThresholdMinutes)
+                    else if (minutes > WarningThresholdMinutes)
                     {
-                        _logger.LogWarning($"Job '{job.Description}' (PID {job.PID}) took {duration:F2} min (> {WarningThresholdMinutes} min).");
+                        _logger.LogWarning(
+                            "Job '{Desc}' (PID {Pid}) took {Minutes:F2} min (>{WarnThresh} min).",
+                            job.Description,
+                            job.PID,
+                            minutes,
+                            WarningThresholdMinutes);
                     }
                     else
                     {
-                        _logger.LogInformation($"Job '{job.Description}' (PID {job.PID}) completed in {duration:F2} min.");
+                        _logger.LogInformation(
+                            "Job '{Desc}' (PID {Pid}) completed in {Minutes:F2} min.",
+                            job.Description,
+                            job.PID,
+                            minutes);
                     }
 
                     completedJobs.Add(job);
@@ -110,12 +144,16 @@ namespace LogMonitorData.Services
                 }
             }
 
-            // After processing all entries, any remaining STARTs never got an END
+            //After processing all entries, any remaining STARTs never got an END
             if (activeJobs.Count > 0)
             {
                 foreach (var orphan in activeJobs.Values)
                 {
-                    _logger.LogWarning($"No matching END for START of PID {orphan.Pid}, job '{orphan.JobDescription}' at {orphan.TimeStamp}.");
+                    _logger.LogWarning(
+                        "No matching END for PID {Pid} ('{Desc}') at {Time}.",
+                        orphan.Pid,
+                        orphan.JobDescription,
+                        orphan.TimeStamp);
                 }
             }
 

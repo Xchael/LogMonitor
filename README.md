@@ -5,6 +5,8 @@ This is a sample project.
 # Thoughts
 Should this work as a console app or maybe a windows service? Will probably go with both and create a common dll for reuse
 Decided to create services and interfaces for parsing the log file as well as handling the data inside it
+Considered using a big file, the worker finishes parsing and outputing fast. Maybe some optimization at AnalyzeJobs level
+Thought about using structured logging (avoids string interpolation) to defer message formatting
 
 # Usage:
 The application will parse the data lazely and store it into an IEnumerable<LogEntry>
